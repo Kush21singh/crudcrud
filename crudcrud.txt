@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Booking Appointment Form</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Booking Appointment</h2>
+
+    <form id="bookingForm">
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email ID:</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number:</label>
+        <input type="tel" class="form-control" id="phone" name="phone" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <h2>Appointments</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email ID</th>
+          <th>Phone Number</th>
+          <th>Edit</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody id="appointmentsTable"></tbody>
+    </table>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Retrieve saved appointments from local storage
+      var savedAppointments = JSON.parse(localStorage.getItem("appointments")) || [];
+
+      // Populate table with saved appointments
+      $.each(savedAppointments, function(index, appointment) {
+        addAppointmentToTable(appointment);
+      });
+
+      $("#bookingForm").submit(function(event) {
+        event.preventDefault(); // Prevent form submission
+
+        var name = $("#name").val();
+        var email = $("#email").val();
+        var phone = $("#phone").val();
+
+        var appointment = {
+          name: name,
+          email: email,
+          phone: phone
+        };
+
+        axios.post("https://crudcrud.com/api/e210ad9aed514463a89ef4f173fec3fe/appoinmentDetails", obj)
+            .then((response) => {
+                showNewUserOnScreen(response.data)
+                //console.log(response)
+            })
+            .catch((err) => {
+                document.body.innerHTML = document.body.innerHTML + "<h4> Something went wrong </h4>" 
+                console.log(err)
+            })
+
+        // Save the new appointment
+        savedAppointments.push(appointment);
+        localStorage.setItem("appointments", JSON.stringify(savedAppointments));
+
+        // Add the appointment to the table
+        addAppointmentToTable(appointment);
+
+        // Reset the form
+        $("#bookingForm")[0].reset();
+      });
+    });
+
+    function addAppointmentToTable(appointment) {
+      // Create a new row in the table
+      var newRow = $("<tr>");
+      newRow.append("<td>" + appointment.name + "</td>");
+      newRow.append("<td>" + appointment.email + "</td>");
+      newRow.append("<td>" + appointment.phone + "</td>");
+
+      // Create edit button
+      var editButton = $("<button>")
+        .addClass("btn btn-sm btn-primary")
+        .text("Edit")
+        .click(function() {
+          editAppointment(newRow);
+        });
+
+      newRow.append($("<td>").append(editButton));
+
+      // Create delete button
+      var deleteButton = $("<button>")
+        .addClass("btn btn-sm btn-danger")
+        .text("Delete")
+        .click(function() {
+          deleteAppointment(newRow);
+        });
+
+      newRow.append($("<td>").append(deleteButton));
+
+      // Append the new row to the table
+      $("#appointmentsTable").append(newRow);
+    }
+
+    function editAppointment(row) {
+      var name = row.find("td:eq(0)").text();
+      var email = row.find("td:eq(1)").text();
+      var phone = row.find("td:eq(2)").text();
+
+      $("#name").val(name);
+      $("#email").val(email);
+      $("#phone").val(phone);
+
+      // Remove the row
+      row.remove();
+    }
+
+    function deleteAppointment(row) {
+      var appointment = {
+        name: row.find("td:eq(0)").text(),
+        email: row.find("td:eq(1)").text(),
+        phone: row.find("td:eq(2)").text()
+      };
+
+      // Remove the row
+      row.remove();
+
+      // Remove the appointment from local storage
+      var savedAppointments = JSON.parse(localStorage.getItem("appointments")) || [];
+      savedAppointments = savedAppointments.filter(function(savedAppointment) {
+        return (
+          savedAppointment.name !== appointment.name ||
+          savedAppointment.email !== appointment.email ||
+          savedAppointment.phone !== appointment.phone
+        );
+      });
+
+      localStorage.setItem("appointments", JSON.stringify(savedAppointments));
+    }
+  </script>
+</body>
+</html>
